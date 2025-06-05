@@ -408,32 +408,37 @@ class ACPL_Trainer:
         )
 
     def _loader_init(self, args):
-        if self.task == "cx14":
-            self.loader = ChestDataloader(
-                args.batch_size,
-                args.num_workers,
-                args.resize,
-                args.data,
-            )
-        elif self.task == "isic":
-            self.loader = ISICDataloader(
-                batch_size=args.batch_size,
-                num_workers=args.num_workers,
-                img_resize=args.img_resize,
-                root_dir=args.data,
-            )
-        self.test_loader, self.test_dataset, self.test_sampler = self.loader.run(
-            "test",
-            transform=self.test_transform,
-            ratio=args.label_ratio,
-            runtime=args.runtime,
+    # convert list task to string if necessary
+    if isinstance(self.task, list):
+        self.task = self.task[0]
+
+    if self.task in ["cx14", "cxp"]:   # Now cxp is recognized
+        from chest_dataloader import ChestDataloader  # Adjust import if necessary
+        self.loader = ChestDataloader(
+            batch_size=args.batch_size,
+            num_workers=args.num_workers,
+            img_resize=args.resize,
+            root_dir=args.data,
         )
-        (self.label_loader1, self.label_dataset, self.label_sampler1,) = self.loader.run(
-            "labeled",
-            transform=self.train_transform,
-            ratio=args.label_ratio,
-            runtime=args.runtime,
+    elif self.task == "isic":
+        from isic_dataloader import ISICDataloader
+        self.loader = ISICDataloader(
+            batch_size=args.batch_size,
+            num_workers=args.num_workers,
+            img_resize=args.resize,
+            root_dir=args.data,
         )
+    else:
+        raise ValueError(f"Unknown task type: {self.task}")
+
+    # Now this will safely run
+    self.test_loader, self.test_dataset, self.test_sampler = self.loader.run(
+        "test",
+        transform=self.test_transform,
+        ratio=args.label_ratio,
+        runtime=args.runtime,
+    )
+
 
         (self.anchor_loader, self.anchor_dataset, self.anchor_sampler,) = self.loader.run(
             "anchor",
