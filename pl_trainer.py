@@ -408,7 +408,7 @@ class ACPL_Trainer:
         )
 
     def _loader_init(self, args):
-        if self.task == "cx14":
+        if self.task == ["cx14","cxp"]:
             self.loader = ChestDataloader(
                 args.batch_size,
                 args.num_workers,
